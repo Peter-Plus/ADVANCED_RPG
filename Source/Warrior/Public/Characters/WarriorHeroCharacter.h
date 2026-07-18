@@ -44,6 +44,7 @@ private:
 
 
 #pragma region Inputs
+	// hero 自定义输入配置资产
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "CharacterData", meta = (AllowPrivateAccess = "true"))
 	UDataAsset_InputConfig* InputConfigDataAsset;
 

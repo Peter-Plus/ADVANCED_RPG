@@ -9,7 +9,8 @@
 class UWarriorGameplayAbility;
 class UWarriorAbilitySystemComponent;
 /**
- * 
+ * 角色GA资产：分为持续型和触发型
+ * 玩家——DA_Hero
  */
 UCLASS()
 class WARRIOR_API UDataAsset_StartUpDataBase : public UDataAsset
@@ -17,6 +18,7 @@ class WARRIOR_API UDataAsset_StartUpDataBase : public UDataAsset
 	GENERATED_BODY()
 
 public:
+	// 将DA里的GA加到ASC上
 	virtual void GiveToAbilitySystemComponent(UWarriorAbilitySystemComponent* InASCToGive, int32 ApplyLevel = 1);
 
 

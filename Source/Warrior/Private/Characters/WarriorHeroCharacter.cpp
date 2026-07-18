@@ -40,6 +40,7 @@ AWarriorHeroCharacter::AWarriorHeroCharacter()
 
 }
 
+// hero 被possess时初始化GA
 void AWarriorHeroCharacter::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
@@ -49,11 +50,13 @@ void AWarriorHeroCharacter::PossessedBy(AController* NewController)
 		UDataAsset_StartUpDataBase* LoadedData = CharacterStartUpData.LoadSynchronous();
 		if (LoadedData)
 		{
+			// 将 DA_Hero 里的GA加到角色的ASC里
 			LoadedData->GiveToAbilitySystemComponent(WarriorAbilitySystemComponent);
 		}
 	}
 }
 
+// 初始化 hero 输入组件
 void AWarriorHeroCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	checkf(InputConfigDataAsset, TEXT("Input config data asset is null, can not proceed with binding"));

@@ -31,6 +31,7 @@ void AWarriorBaseCharacter::PossessedBy(AController* NewController)
 	{
 		WarriorAbilitySystemComponent->InitAbilityActorInfo(this, this);
 
+		//检查
 		ensureMsgf(!CharacterStartUpData.IsNull(), TEXT("forgot to assign start up data to character %s"), *GetName());
 	}
 }

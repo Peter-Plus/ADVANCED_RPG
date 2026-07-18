@@ -21,6 +21,7 @@ public:
 	void BindNativeInputAction(const UDataAsset_InputConfig* InInputConfig, const FGameplayTag& InInputTag, ETriggerEvent TriggerEvent, UserObject* ContextObject, CallbackFunc Func);
 };
 
+// 通过 Tag 在DA_InputConfig里去寻找对应 Input Action，然后绑定角色对应方法
 template<class UserObject, typename CallbackFunc>
 inline void UWarriorInputComponent::BindNativeInputAction(const UDataAsset_InputConfig* InInputConfig, const FGameplayTag& InInputTag, ETriggerEvent TriggerEvent, UserObject* ContextObject, CallbackFunc Func)
 {

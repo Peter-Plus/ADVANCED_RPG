@@ -10,6 +10,7 @@
 class UInputAction;
 class UInputMappingContext;
 
+// Tag - Input Action
 USTRUCT(BlueprintType)
 struct FWarriorInputActionConfig
 {
@@ -25,7 +26,7 @@ public:
 
 
 /**
- * 
+ * Input配置资产，包含IMC，Tag-Action的数组
  */
 UCLASS()
 class WARRIOR_API UDataAsset_InputConfig : public UDataAsset
@@ -39,5 +40,6 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, meta = (TitleProperty = "InputTag"))
 	TArray<FWarriorInputActionConfig> NativeInputActions;
 
+	// 通过tag寻找对应Input Action
 	UInputAction* FindNativeInputActionByTag(const FGameplayTag& InInputTag) const;
 };
