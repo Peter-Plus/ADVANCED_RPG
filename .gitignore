@@ -1,0 +1,41 @@
+# This repository intentionally tracks only the project's C++ core source.
+# Ignore everything by default, then allow the small source-only set below.
+/*
+
+!/.gitignore
+!/README.md
+!/Warrior.uproject
+
+!/Source/
+!/Source/**
+
+# Keep local IDE metadata and generated files out even if the policy expands.
+.idea/
+.vs/
+.vscode/
+*.sln
+*.suo
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+
+Binaries/
+Build/
+DerivedDataCache/
+Intermediate/
+Saved/
+
+# Unreal assets and local project configuration are intentionally excluded.
+Content/
+Config/
+Plugins/
+
+# Local and platform noise.
+*.log
+*.tmp
+*.user
+*.userprefs
+.DS_Store
+Thumbs.db
+
