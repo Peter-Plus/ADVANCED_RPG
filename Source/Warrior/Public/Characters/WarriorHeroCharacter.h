@@ -68,8 +68,16 @@ private:
 	void Input_Move(const FInputActionValue& InputActionValue);
 	void Input_Look(const FInputActionValue& InputActionValue);
 	
+	void Input_SwitchTargetTriggered(const FInputActionValue& InputActionValue);
+	void Input_SwitchTargetCompleted(const FInputActionValue& InputActionValue);
+	
 	void Input_AbilityInputPressed(FGameplayTag InInputTag);
 	void Input_AbilityInputReleased(FGameplayTag InInputTag);
+	
+	UPROPERTY(EditDefaultsOnly, Category = "Input|Target Lock", meta = (ClampMin = "0.0"))
+	float SwitchTargetTriggerThreshold = 0.35f;
+
+	bool bSwitchTargetInputConsumed = false;
 
 #pragma endregion
 	

@@ -14,7 +14,7 @@
 #include "DataAssets/StartUpData/DataAsset_StartUpDataBase.h"
 #include "Components/Combat/HeroCombatComponent.h"
 #include "Components/UI/HeroUIComponent.h"
-
+#include "AbilitySystemBlueprintLibrary.h"
 #include "WarriorDebugHelper.h"
 
 AWarriorHeroCharacter::AWarriorHeroCharacter()
@@ -95,6 +95,11 @@ void AWarriorHeroCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	WarriorInputComponent->BindNativeInputAction(InputConfigDataAsset, WarriorGameplayTags::InputTag_Look,
 		ETriggerEvent::Triggered, this, &ThisClass::Input_Look);
 	
+	WarriorInputComponent->BindNativeInputAction(InputConfigDataAsset,WarriorGameplayTags::InputTag_SwitchTarget,
+		ETriggerEvent::Triggered,this,&ThisClass::Input_SwitchTargetTriggered);
+	WarriorInputComponent->BindNativeInputAction(InputConfigDataAsset,WarriorGameplayTags::InputTag_SwitchTarget,
+		ETriggerEvent::Completed,this,&ThisClass::Input_SwitchTargetCompleted);
+	
 	WarriorInputComponent->BindAbilityInputAction(InputConfigDataAsset,this,
 		&ThisClass::Input_AbilityInputPressed,&ThisClass::Input_AbilityInputReleased);
 
@@ -137,6 +142,40 @@ void AWarriorHeroCharacter::Input_Look(const FInputActionValue& InputActionValue
 	{
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+
+void AWarriorHeroCharacter::Input_SwitchTargetTriggered(const FInputActionValue& InputActionValue)
+{
+	if (bSwitchTargetInputConsumed)
+	{
+		return;
+	}
+	
+	const float SwitchInput = InputActionValue.Get<float>();
+	
+	// 过滤轻微的水平鼠标抖动
+	if (FMath::Abs(SwitchInput) < SwitchTargetTriggerThreshold)
+	{
+		return;
+	}
+
+	FGameplayEventData EventData;
+	
+	const FGameplayTag SwitchEventTag = SwitchInput > 0.f ? WarriorGameplayTags::Player_Event_SwitchTarget_Right : WarriorGameplayTags::Player_Event_SwitchTarget_Left;
+	
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+		this,
+		SwitchEventTag,
+		EventData);
+	
+	// 本次连续输入只允许切换一次
+	bSwitchTargetInputConsumed = true;
+}
+
+	void AWarriorHeroCharacter::Input_SwitchTargetCompleted(const FInputActionValue& InputActionValue)
+{
+	// 鼠标停止移动或摇杆回中后，允许下一次切换
+	bSwitchTargetInputConsumed = false;
 }
 
 void AWarriorHeroCharacter::Input_AbilityInputPressed(FGameplayTag InInputTag)
