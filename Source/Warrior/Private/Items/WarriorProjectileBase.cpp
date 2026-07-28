@@ -2,26 +2,100 @@
 
 
 #include "Items/WarriorProjectileBase.h"
+#include "Components/BoxComponent.h"
+#include "NiagaraComponent.h"
+#include "GameFramework/ProjectileMovementComponent.h"
+#include "WarriorFunctionLibrary.h"
+#include "WarriorGameplayTags.h"
+#include "AbilitySystemBlueprintLibrary.h"
+#include "WarriorDebugHelper.h"
 
-// Sets default values
 AWarriorProjectileBase::AWarriorProjectileBase()
 {
- 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
-
+	PrimaryActorTick.bCanEverTick = false;
+	
+	ProjectileCollisionBox = CreateDefaultSubobject<UBoxComponent>(TEXT("ProjectileCollisionBox"));
+	SetRootComponent(ProjectileCollisionBox);
+	ProjectileCollisionBox->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+	ProjectileCollisionBox->SetCollisionResponseToChannel(ECC_Pawn,ECR_Block);
+	ProjectileCollisionBox->SetCollisionResponseToChannel(ECC_WorldDynamic,ECR_Block);
+	ProjectileCollisionBox->SetCollisionResponseToChannel(ECC_WorldStatic,ECR_Block);
+	ProjectileCollisionBox->OnComponentHit.AddUniqueDynamic(this,&ThisClass::AWarriorProjectileBase::OnProjectileHit);
+	ProjectileCollisionBox->OnComponentBeginOverlap.AddUniqueDynamic(this,&ThisClass::OnProjectileBeginOverlap);
+	
+	ProjectileNiagaraComponent = CreateDefaultSubobject<UNiagaraComponent>(TEXT("ProjectileNiagaraComponent"));
+	ProjectileNiagaraComponent->SetupAttachment(GetRootComponent());
+	
+	ProjectileMovementComponent = CreateDefaultSubobject<UProjectileMovementComponent>(TEXT("ProjectileMovementComponent"));
+	ProjectileMovementComponent->InitialSpeed = 1000.f;
+	ProjectileMovementComponent->MaxSpeed = 1500.f;
+	ProjectileMovementComponent->Velocity = FVector(1.f, 0.f, 0.f);
+	ProjectileMovementComponent->ProjectileGravityScale = 0.f;
+	
+	InitialLifeSpan = 6.f;
 }
 
-// Called when the game starts or when spawned
 void AWarriorProjectileBase::BeginPlay()
 {
 	Super::BeginPlay();
 	
+	if (ProjectileDamagePolicy == EProjectileDamagePolicy::OnBeginOverlap)
+	{
+		ProjectileCollisionBox->SetCollisionResponseToChannel(ECC_Pawn,ECR_Overlap);
+	}
 }
 
-// Called every frame
-void AWarriorProjectileBase::Tick(float DeltaTime)
+void AWarriorProjectileBase::OnProjectileHit(UPrimitiveComponent* HitComponent, AActor* OtherActor, UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit)
 {
-	Super::Tick(DeltaTime);
+	BP_OnSpawnProjectileHitFX(Hit.ImpactPoint);
+	
+	APawn* HitPawn = Cast<APawn>(OtherActor);
+	
+	if (!HitPawn || !UWarriorFunctionLibrary::IsTargetPawnHostile(GetInstigator(),HitPawn))
+	{
+		Destroy();
+		return;
+	}
+	
+	bool bIsValidBlock = false;
+	
+	const bool bIsPlayerBlocking = UWarriorFunctionLibrary::NativeDoesActorHaveTag(HitPawn,WarriorGameplayTags::Player_Status_Blocking);
 
+	if (bIsPlayerBlocking)
+	{
+		bIsValidBlock = UWarriorFunctionLibrary::IsValidBlock(this,HitPawn);
+	}
+	
+	FGameplayEventData Data;
+	Data.Instigator = this;
+	Data.Target = HitPawn;
+	
+	if (bIsValidBlock)
+	{
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+			HitPawn,WarriorGameplayTags::Player_Event_SuccessfulBlock,Data);
+	}
+	else
+	{
+		HandleApplyProjectileDamage(HitPawn,Data);
+	}
+	Destroy();
 }
 
+void AWarriorProjectileBase::OnProjectileBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+}
+
+void AWarriorProjectileBase::HandleApplyProjectileDamage(APawn* InHitPawn, const FGameplayEventData& InPayload) const
+{
+	checkf(ProjectileDamageEffectSpecHandle.IsValid(),TEXT("Forgot to assign a valid spec handle to the projectile: %s"),*GetActorNameOrLabel());
+	
+	const bool bWasApplied = UWarriorFunctionLibrary::ApplyGameplayEffectSpecHandleToTargetActor(GetInstigator(),
+		InHitPawn,ProjectileDamageEffectSpecHandle);
+	
+	if (bWasApplied)
+	{
+		UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+			InHitPawn,WarriorGameplayTags::Shared_Event_HitReact,InPayload);
+	}
+}
