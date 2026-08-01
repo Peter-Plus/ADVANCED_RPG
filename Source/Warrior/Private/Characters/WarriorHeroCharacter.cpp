@@ -15,6 +15,7 @@
 #include "Components/Combat/HeroCombatComponent.h"
 #include "Components/UI/HeroUIComponent.h"
 #include "AbilitySystemBlueprintLibrary.h"
+#include "GameModes/WarriorBaseGameMode.h"
 #include "WarriorDebugHelper.h"
 
 AWarriorHeroCharacter::AWarriorHeroCharacter()
@@ -71,8 +72,35 @@ void AWarriorHeroCharacter::PossessedBy(AController* NewController)
 		UDataAsset_StartUpDataBase* LoadedData = CharacterStartUpData.LoadSynchronous();
 		if (LoadedData)
 		{
+			int32 AbilityApplyLevel = 1;
+
+			if (AWarriorBaseGameMode* BaseGameMode = GetWorld()->GetAuthGameMode<AWarriorBaseGameMode>())
+			{
+				switch (BaseGameMode->GetCurrentGameDifficulty())
+				{
+				case EWarriorGameDifficulty::Easy:
+					AbilityApplyLevel = 4;
+					break;
+
+				case EWarriorGameDifficulty::Normal:
+					AbilityApplyLevel = 3;
+					break;
+
+				case EWarriorGameDifficulty::Hard:
+					AbilityApplyLevel = 2;
+					break;
+
+				case EWarriorGameDifficulty::Hell:
+					AbilityApplyLevel = 1;
+					break;
+
+				default:
+					break;
+				}
+			}
+			
 			// 将 DA_Hero 里的GA加到角色的ASC里
-			LoadedData->GiveToAbilitySystemComponent(WarriorAbilitySystemComponent);
+			LoadedData->GiveToAbilitySystemComponent(WarriorAbilitySystemComponent,AbilityApplyLevel);
 		}
 	}
 }
