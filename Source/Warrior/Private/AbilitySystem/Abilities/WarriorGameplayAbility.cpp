@@ -69,27 +69,31 @@ void UWarriorGameplayAbility::ApplyGameplayEffectSpecHandleToHitResults(const FG
 	}
 	
 	APawn* OwningPawn = CastChecked<APawn>(GetAvatarActorFromActorInfo());
+	TSet<APawn*> ProcessedHitPawns;
 	
 	for (const FHitResult& Hit : InHitResults)
 	{
-		if (APawn* HitPawn = Cast<APawn>(Hit.GetActor()))
+		APawn* HitPawn = Cast<APawn>(Hit.GetActor());
+		if (!HitPawn ||
+			ProcessedHitPawns.Contains(HitPawn) ||
+			!UWarriorFunctionLibrary::IsTargetPawnHostile(OwningPawn, HitPawn))
 		{
-			if (UWarriorFunctionLibrary::IsTargetPawnHostile(OwningPawn, HitPawn))
-			{
-				FActiveGameplayEffectHandle ActiveGameplayEffectHandle = NativeApplyEffectSpecHandleToTarget(HitPawn,InSpecHandle);
+			continue;
+		}
+
+		ProcessedHitPawns.Add(HitPawn);
+		FActiveGameplayEffectHandle ActiveGameplayEffectHandle = NativeApplyEffectSpecHandleToTarget(HitPawn, InSpecHandle);
 				
-				if (ActiveGameplayEffectHandle.WasSuccessfullyApplied())
-				{
-					FGameplayEventData Data;
-					Data.Instigator = OwningPawn;
-					Data.Target = HitPawn;
+		if (ActiveGameplayEffectHandle.WasSuccessfullyApplied())
+		{
+			FGameplayEventData Data;
+			Data.Instigator = OwningPawn;
+			Data.Target = HitPawn;
 					
-					UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
-						HitPawn,
-						WarriorGameplayTags::Shared_Event_HitReact,
-						Data);
-				}
-			}
+			UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+				HitPawn,
+				WarriorGameplayTags::Shared_Event_HitReact,
+				Data);
 		}
 	}
 }

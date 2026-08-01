@@ -100,6 +100,9 @@ void AWarriorHeroCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInp
 	WarriorInputComponent->BindNativeInputAction(InputConfigDataAsset,WarriorGameplayTags::InputTag_SwitchTarget,
 		ETriggerEvent::Completed,this,&ThisClass::Input_SwitchTargetCompleted);
 	
+	WarriorInputComponent->BindNativeInputAction(InputConfigDataAsset,WarriorGameplayTags::InputTag_PickUp_Stones,
+		ETriggerEvent::Started,this,&ThisClass::Input_PickUpStonesStarted);
+	
 	WarriorInputComponent->BindAbilityInputAction(InputConfigDataAsset,this,
 		&ThisClass::Input_AbilityInputPressed,&ThisClass::Input_AbilityInputReleased);
 
@@ -176,6 +179,15 @@ void AWarriorHeroCharacter::Input_SwitchTargetTriggered(const FInputActionValue&
 {
 	// 鼠标停止移动或摇杆回中后，允许下一次切换
 	bSwitchTargetInputConsumed = false;
+}
+
+void AWarriorHeroCharacter::Input_PickUpStonesStarted(const FInputActionValue& InputActionValue)
+{
+	FGameplayEventData Data;
+	UAbilitySystemBlueprintLibrary::SendGameplayEventToActor(
+		this,
+		WarriorGameplayTags::Player_Event_ConsumeStones,
+		Data);
 }
 
 void AWarriorHeroCharacter::Input_AbilityInputPressed(FGameplayTag InInputTag)
